@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Emergency Contacts - Vehicle QR</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            color: #222;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .back-button {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background: #e5e7eb;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-card,
+        .contacts-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+
+            border: 1px solid #ddd;
+            border-radius: 9px;
+
+            font-size: 15px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 9px;
+
+            background: #dc2626;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background: #b91c1c;
+        }
+
+        .contact {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .contact h3 {
+            margin-bottom: 10px;
+        }
+
+        .contact-info {
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .edit-button {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .delete-button {
+            background: #374151;
+            color: white;
+        }
+
+        .cancel-button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            border: none;
+            border-radius: 9px;
+            background: #e5e7eb;
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 25px;
+            color: #666;
+        }
+
+        .message {
+            margin-top: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        @media (max-width: 600px) {
+
+            .contact-actions {
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <h1>🚨 Emergency Contacts</h1>
+
+        <p>
+            Manage your emergency contacts.
+        </p>
+
+        <button
+                class="back-button"
+                onclick="goBack()">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+
+    <!-- ADD / EDIT CONTACT -->
+
+    <div class="add-card">
+
+        <h2
+                class="section-title"
+                id="formTitle">
+
+            ➕ Add Emergency Contact
+
+        </h2>
+
+
+        <form id="contactForm">
+
+
+            <!-- NAME -->
+
+            <div class="form-group">
+
+                <label for="name">
+                    Name
+                </label>
+
+                <input
+                        type="text"
+                        id="name"
+                        placeholder="e.g. Ahmed"
+                        required>
+
+            </div>
+
+
+            <!-- RELATIONSHIP -->
+
+            <div class="form-group">
+
+                <label for="relationship">
+                    Relationship
+                </label>
+
+                <input
+                        type="text"
+                        id="relationship"
+                        placeholder="e.g. Brother"
+                        required>
+
+            </div>
+
+
+            <!-- PHONE -->
+
+            <div class="form-group">
+
+                <label for="phone">
+                    Phone
+                </label>
+
+                <input
+                        type="tel"
+                        id="phone"
+                        placeholder="e.g. 03123456789"
+                        required>
+
+            </div>
+
+
+            <!-- PRIORITY -->
+
+            <div class="form-group">
+
+                <label for="priority">
+                    Priority
+                </label>
+
+                <select id="priority">
+
+                    <option value="1">
+                        1 - Highest
+                    </option>
+
+                    <option value="2">
+                        2
+                    </option>
+
+                    <option value="3">
+                        3
+                    </option>
+
+                    <option value="4">
+                        4
+                    </option>
+
+                    <option value="5">
+                        5 - Lowest
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                    type="submit"
+                    class="submit-button"
+                    id="submitButton">
+
+                Add Contact
+
+            </button>
+
+
+            <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                    onclick="cancelEdit()">
+
+                Cancel Edit
+
+            </button>
+
+
+            <div
+                    id="message"
+                    class="message">
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+
+    <!-- CURRENT CONTACTS -->
+
+    <div class="contacts-card">
+
+        <h2 class="section-title">
+
+            👥 My Emergency Contacts
+
+        </h2>
+
+
+        <div id="contactsContainer">
+
+            <div class="loading">
+                Loading contacts...
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+    // ==========================================
+    // GET LOGGED-IN USER
+    // ==========================================
+
+    const storedUser =
+        localStorage.getItem("loggedInUser");
+
+
+    if (!storedUser) {
+
+        window.location.href =
+            "login.html";
+
+    }
+
+
+    const user =
+        JSON.parse(storedUser);
+
+
+    // ==========================================
+    // ELEMENTS
+    // ==========================================
+
+    const contactForm =
+        document.getElementById(
+            "contactForm"
+        );
+
+
+    const nameInput =
+        document.getElementById(
+            "name"
+        );
+
+
+    const relationshipInput =
+        document.getElementById(
+            "relationship"
+        );
+
+
+    const phoneInput =
+        document.getElementById(
+            "phone"
+        );
+
+
+    const priorityInput =
+        document.getElementById(
+            "priority"
+        );
+
+
+    const submitButton =
+        document.getElementById(
+            "submitButton"
+        );
+
+
+    const cancelButton =
+        document.getElementById(
+            "cancelButton"
+        );
+
+
+    const formTitle =
+        document.getElementById(
+            "formTitle"
+        );
+
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    const contactsContainer =
+        document.getElementById(
+            "contactsContainer"
+        );
+
+
+    // Contact currently being edited
+
+    let editingContactId = null;
+
+
+    // ==========================================
+    // LOAD CONTACTS
+    // ==========================================
+
+    loadContacts();
+
+
+    async function loadContacts() {
+
+        contactsContainer.innerHTML = `
+
+            <div class="loading">
+                Loading contacts...
+            </div>
+
+        `;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/emergency-contacts/user/${user.id}`
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load contacts"
+                );
+
+            }
+
+
+            const contacts =
+                await response.json();
+
+
+            if (contacts.length === 0) {
+
+                contactsContainer.innerHTML = `
+
+                    <div class="empty">
+
+                        <h3>
+                            No emergency contacts
+                        </h3>
+
+                        <br>
+
+                        Add your first emergency
+                        contact above.
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            contactsContainer.innerHTML = "";
+
+
+            contacts.forEach(contact => {
+
+                const contactDiv =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                contactDiv.className =
+                    "contact";
+
+
+                contactDiv.innerHTML = `
+
+                    <h3>
+                        👤 ${escapeHtml(contact.name)}
+                    </h3>
+
+
+                    <div class="contact-info">
+
+                        <strong>
+                            Relationship:
+                        </strong>
+
+                        ${escapeHtml(
+                            contact.relationship
+                        )}
+
+                    </div>
+
+
+                    <div class="contact-info">
+
+                        <strong>
+                            Phone:
+                        </strong>
+
+                        ${escapeHtml(
+                            contact.phone
+                        )}
+
+                    </div>
+
+
+                    <div class="contact-info">
+
+                        <strong>
+                            Priority:
+                        </strong>
+
+                        ${contact.priority}
+
+                    </div>
+
+
+                    <div class="contact-actions">
+
+                        <button
+                            class="action-button edit-button"
+                            onclick="editContact(
+                                ${contact.id},
+                                '${escapeJs(contact.name)}',
+                                '${escapeJs(contact.relationship)}',
+                                '${escapeJs(contact.phone)}',
+                                ${contact.priority}
+                            )">
+
+                            ✏️ Edit
+
+                        </button>
+
+
+                        <button
+                            class="action-button delete-button"
+                            onclick="deleteContact(
+                                ${contact.id}
+                            )">
+
+                            🗑️ Delete
+
+                        </button>
+
+                    </div>
+
+                `;
+
+
+                contactsContainer.appendChild(
+                    contactDiv
+                );
+
+            });
+
+        }
+
+
+        catch (error) {
+
+            contactsContainer.innerHTML = `
+
+                <div class="empty">
+
+                    <h3>
+                        Error
+                    </h3>
+
+                    <p>
+                        Unable to load emergency contacts.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    // ==========================================
+    // ADD / UPDATE CONTACT
+    // ==========================================
+
+    contactForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const contactData = {
+
+                userId:
+                    user.id,
+
+                name:
+                    nameInput.value.trim(),
+
+                relationship:
+                    relationshipInput.value.trim(),
+
+                phone:
+                    phoneInput.value.trim(),
+
+                priority:
+                    parseInt(
+                        priorityInput.value
+                    )
+
+            };
+
+
+            submitButton.disabled =
+                true;
+
+
+            try {
+
+                let response;
+
+
+                // ==================================
+                // UPDATE
+                // ==================================
+
+                if (editingContactId) {
+
+                    response =
+                        await fetch(
+                            `/api/emergency-contacts/${editingContactId}`,
+                            {
+                                method: "PUT",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        contactData
+                                    )
+                            }
+                        );
+
+                }
+
+
+                // ==================================
+                // ADD
+                // ==================================
+
+                else {
+
+                    response =
+                        await fetch(
+                            "/api/emergency-contacts",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        contactData
+                                    )
+                            }
+                        );
+
+                }
+
+
+                if (!response.ok) {
+
+                    const errorText =
+                        await response.text();
+
+
+                    throw new Error(
+                        errorText ||
+                        "Operation failed"
+                    );
+
+                }
+
+
+                showMessage(
+                    editingContactId
+                        ? "Contact updated successfully."
+                        : "Contact added successfully.",
+                    "success"
+                );
+
+
+                resetForm();
+
+
+                await loadContacts();
+
+            }
+
+
+            catch (error) {
+
+                showMessage(
+                    error.message ||
+                    "Unable to save contact.",
+                    "error"
+                );
+
+            }
+
+
+            finally {
+
+                submitButton.disabled =
+                    false;
+
+            }
+
+        }
+    );
+
+
+    // ==========================================
+    // EDIT CONTACT
+    // ==========================================
+
+    function editContact(
+        id,
+        name,
+        relationship,
+        phone,
+        priority
+    ) {
+
+        editingContactId =
+            id;
+
+
+        nameInput.value =
+            name;
+
+
+        relationshipInput.value =
+            relationship;
+
+
+        phoneInput.value =
+            phone;
+
+
+        priorityInput.value =
+            priority;
+
+
+        formTitle.textContent =
+            "✏️ Edit Emergency Contact";
+
+
+        submitButton.textContent =
+            "Update Contact";
+
+
+        cancelButton.style.display =
+            "block";
+
+
+        window.scrollTo({
+
+            top: 0,
+
+            behavior: "smooth"
+
+        });
+
+    }
+
+
+    // ==========================================
+    // CANCEL EDIT
+    // ==========================================
+
+    function cancelEdit() {
+
+        resetForm();
+
+    }
+
+
+    // ==========================================
+    // RESET FORM
+    // ==========================================
+
+    function resetForm() {
+
+        editingContactId =
+            null;
+
+
+        contactForm.reset();
+
+
+        priorityInput.value =
+            "1";
+
+
+        formTitle.textContent =
+            "➕ Add Emergency Contact";
+
+
+        submitButton.textContent =
+            "Add Contact";
+
+
+        cancelButton.style.display =
+            "none";
+
+    }
+
+
+    // ==========================================
+    // DELETE CONTACT
+    // ==========================================
+
+    async function deleteContact(
+        contactId
+    ) {
+
+        const confirmation =
+            confirm(
+                "Are you sure you want to delete this emergency contact?"
+            );
+
+
+        if (!confirmation) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/emergency-contacts/${contactId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+
+                throw new Error(
+                    errorText ||
+                    "Unable to delete contact"
+                );
+
+            }
+
+
+            showMessage(
+                "Contact deleted successfully.",
+                "success"
+            );
+
+
+            await loadContacts();
+
+        }
+
+
+        catch (error) {
+
+            showMessage(
+                error.message ||
+                "Unable to delete contact.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // SHOW MESSAGE
+    // ==========================================
+
+    function showMessage(
+        text,
+        type
+    ) {
+
+        message.textContent =
+            text;
+
+
+        message.className =
+            "message " + type;
+
+
+        setTimeout(
+            function() {
+
+                message.textContent =
+                    "";
+
+                message.className =
+                    "message";
+
+            },
+            3000
+        );
+
+    }
+
+
+    // ==========================================
+    // BACK TO DASHBOARD
+    // ==========================================
+
+    function goBack() {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+
+    // ==========================================
+    // SECURITY HELPERS
+    // ==========================================
+
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+
+            return "";
+
+        }
+
+
+        return String(value)
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    function escapeJs(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+
+            return "";
+
+        }
+
+
+        return String(value)
+            .replace(
+                /\\/g,
+                "\\\\"
+            )
+            .replace(
+                /'/g,
+                "\\'"
+            )
+            .replace(
+                /"/g,
+                '\\"'
+            );
+
+    }
+
+</script>
+
+</body>
+
+</html>

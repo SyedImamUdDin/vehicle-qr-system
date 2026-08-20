@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Verify Email - Vehicle QR</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 70px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+
+            box-shadow:
+                0 5px 20px rgba(0,0,0,0.10);
+
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 50px;
+        }
+
+        h1 {
+            margin-top: 15px;
+            font-size: 26px;
+        }
+
+        .description {
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .email {
+            font-weight: bold;
+            margin-top: 10px;
+            word-break: break-word;
+        }
+
+        input {
+            width: 100%;
+            margin-top: 25px;
+
+            padding: 15px;
+
+            border: 1px solid #ddd;
+            border-radius: 10px;
+
+            font-size: 24px;
+            text-align: center;
+
+            letter-spacing: 8px;
+
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #222;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 15px;
+
+            padding: 14px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .verify-button {
+            background: #222;
+            color: white;
+        }
+
+        .resend-button {
+            background: #e5e5e5;
+            color: #222;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .change-email {
+            display: block;
+            margin-top: 20px;
+
+            color: #222;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <div class="icon">
+            📧
+        </div>
+
+        <h1>
+            Verify Your Email
+        </h1>
+
+        <p class="description">
+
+            We sent a 6-digit verification
+            code to:
+
+        </p>
+
+        <div
+                class="email"
+                id="emailDisplay">
+
+            Loading...
+
+        </div>
+
+
+        <input
+                type="text"
+                id="code"
+                maxlength="6"
+                inputmode="numeric"
+                placeholder="000000">
+
+
+        <button
+                class="verify-button"
+                id="verifyButton"
+                onclick="verifyEmail()">
+
+            Verify Email
+
+        </button>
+
+
+        <button
+                class="resend-button"
+                id="resendButton"
+                onclick="resendCode()">
+
+            Resend Code
+
+        </button>
+
+
+        <div
+                id="message"
+                class="message">
+        </div>
+
+
+        <a
+                href="register.html"
+                class="change-email">
+
+            Use a different email
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const email =
+        localStorage.getItem(
+            "verificationEmail"
+        );
+
+
+    const emailDisplay =
+        document.getElementById(
+            "emailDisplay"
+        );
+
+
+    const codeInput =
+        document.getElementById(
+            "code"
+        );
+
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    const verifyButton =
+        document.getElementById(
+            "verifyButton"
+        );
+
+
+    const resendButton =
+        document.getElementById(
+            "resendButton"
+        );
+
+
+    if (!email) {
+
+        window.location.href =
+            "register.html";
+
+    } else {
+
+        emailDisplay.textContent =
+            email;
+
+    }
+
+
+    async function verifyEmail() {
+
+        const code =
+            codeInput.value.trim();
+
+
+        if (!/^\d{6}$/.test(code)) {
+
+            showMessage(
+                "Please enter the 6-digit code.",
+                true
+            );
+
+            return;
+        }
+
+
+        verifyButton.disabled = true;
+
+        verifyButton.textContent =
+            "Verifying...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/users/verify-email",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            email: email,
+
+                            code: code
+
+                        })
+                    }
+                );
+
+
+            const result =
+                await response.text();
+
+
+            if (!response.ok) {
+
+                throw new Error(result);
+            }
+
+
+            showMessage(
+                result,
+                false
+            );
+
+
+            localStorage.removeItem(
+                "verificationEmail"
+            );
+
+
+            setTimeout(
+                function() {
+
+                    window.location.href =
+                        "login.html";
+
+                },
+                1500
+            );
+
+        }
+
+        catch (error) {
+
+            showMessage(
+                error.message,
+                true
+            );
+
+        }
+
+        finally {
+
+            verifyButton.disabled =
+                false;
+
+            verifyButton.textContent =
+                "Verify Email";
+
+        }
+
+    }
+
+
+    async function resendCode() {
+
+        resendButton.disabled = true;
+
+        resendButton.textContent =
+            "Sending...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/users/resend-code",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            email: email
+
+                        })
+                    }
+                );
+
+
+            const result =
+                await response.text();
+
+
+            if (!response.ok) {
+
+                throw new Error(result);
+            }
+
+
+            showMessage(
+                result,
+                false
+            );
+
+        }
+
+        catch (error) {
+
+            showMessage(
+                error.message,
+                true
+            );
+
+        }
+
+        finally {
+
+            resendButton.disabled =
+                false;
+
+            resendButton.textContent =
+                "Resend Code";
+
+        }
+
+    }
+
+
+    function showMessage(
+        text,
+        isError
+    ) {
+
+        message.textContent =
+            text;
+
+        message.className =
+            isError
+                ? "message error"
+                : "message success";
+
+    }
+
+</script>
+
+</body>
+
+</html>

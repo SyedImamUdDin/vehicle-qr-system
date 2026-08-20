@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Add Vehicle - Vehicle QR</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+
+            box-shadow:
+                0 5px 20px rgba(0, 0, 0, 0.10);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-icon {
+            font-size: 45px;
+        }
+
+        .header h1 {
+            margin-top: 10px;
+            font-size: 25px;
+        }
+
+        .header p {
+            margin-top: 6px;
+            color: #777;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px;
+
+            border: 1px solid #ddd;
+            border-radius: 10px;
+
+            font-size: 16px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #555;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .submit-button {
+            background: #222;
+            color: white;
+        }
+
+        .back-button {
+            background: #ddd;
+            color: #222;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #message {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="form-card">
+
+        <div class="header">
+
+            <div class="header-icon">
+                🚗
+            </div>
+
+            <h1>Add Vehicle</h1>
+
+            <p>
+                Register your vehicle and generate
+                its QR code.
+            </p>
+
+        </div>
+
+
+        <form id="vehicleForm">
+
+
+            <!-- REGISTRATION NUMBER -->
+
+            <div class="form-group">
+
+                <label for="registrationNumber">
+                    Registration Number
+                </label>
+
+                <input
+                    type="text"
+                    id="registrationNumber"
+                    placeholder="e.g. ABC-123"
+                    required
+                >
+
+            </div>
+
+
+            <!-- MODEL -->
+
+            <div class="form-group">
+
+                <label for="model">
+                    Vehicle Model
+                </label>
+
+                <input
+                    type="text"
+                    id="model"
+                    placeholder="e.g. Toyota Corolla"
+                    required
+                >
+
+            </div>
+
+
+            <!-- COLOR -->
+
+            <div class="form-group">
+
+                <label for="color">
+                    Color
+                </label>
+
+                <input
+                    type="text"
+                    id="color"
+                    placeholder="e.g. White"
+                    required
+                >
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="buttons">
+
+                <button
+                    type="button"
+                    class="back-button"
+                    onclick="goBack()">
+
+                    ← Back
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="submit-button"
+                    id="submitButton">
+
+                    Add Vehicle
+
+                </button>
+
+            </div>
+
+
+            <div id="message"></div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+     * Get logged-in user
+     */
+
+    const storedUser =
+        localStorage.getItem("loggedInUser");
+
+
+    /*
+     * If no user is logged in,
+     * send them to login page.
+     */
+
+    if (!storedUser) {
+
+        window.location.href =
+            "login.html";
+
+    }
+
+
+    const user =
+        JSON.parse(storedUser);
+
+
+    /*
+     * Form
+     */
+
+    const vehicleForm =
+        document.getElementById(
+            "vehicleForm"
+        );
+
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    const submitButton =
+        document.getElementById(
+            "submitButton"
+        );
+
+
+    /*
+     * Submit vehicle
+     */
+
+    vehicleForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const registrationNumber =
+                document.getElementById(
+                    "registrationNumber"
+                ).value.trim();
+
+
+            const model =
+                document.getElementById(
+                    "model"
+                ).value.trim();
+
+
+            const color =
+                document.getElementById(
+                    "color"
+                ).value.trim();
+
+
+            /*
+             * Disable button
+             */
+
+            submitButton.disabled = true;
+
+            submitButton.textContent =
+                "Adding Vehicle...";
+
+            message.textContent = "";
+
+
+            try {
+
+                /*
+                 * Send vehicle to backend
+                 */
+
+                const response =
+                    await fetch(
+                        "/api/vehicles",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                userId: user.id,
+
+                                registrationNumber:
+                                    registrationNumber,
+
+                                model:
+                                    model,
+
+                                color:
+                                    color
+
+                            })
+
+                        }
+                    );
+
+
+                /*
+                 * Check response
+                 */
+
+                if (!response.ok) {
+
+                    const error =
+                        await response.text();
+
+                    throw new Error(error);
+
+                }
+
+
+                /*
+                 * Get saved vehicle
+                 */
+
+                const vehicle =
+                    await response.json();
+
+
+                /*
+                 * Show success
+                 */
+
+                message.className =
+                    "success";
+
+                message.textContent =
+                    "Vehicle added successfully!";
+
+
+                /*
+                 * Wait briefly and
+                 * return to dashboard.
+                 */
+
+                setTimeout(
+                    function() {
+
+                        window.location.href =
+                            "dashboard.html";
+
+                    },
+                    1000
+                );
+
+
+            }
+
+            catch (error) {
+
+                message.className =
+                    "error";
+
+                message.textContent =
+                    error.message ||
+                    "Failed to add vehicle.";
+
+            }
+
+
+            finally {
+
+                submitButton.disabled =
+                    false;
+
+                submitButton.textContent =
+                    "Add Vehicle";
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Back button
+     */
+
+    function goBack() {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+</script>
+
+</body>
+
+</html>

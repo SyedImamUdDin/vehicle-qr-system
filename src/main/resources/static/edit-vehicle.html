@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Edit Vehicle - Vehicle QR</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+
+            box-shadow:
+                0 5px 20px rgba(0,0,0,0.10);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-icon {
+            font-size: 45px;
+        }
+
+        .header h1 {
+            margin-top: 10px;
+            font-size: 25px;
+        }
+
+        .header p {
+            margin-top: 6px;
+            color: #777;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px;
+
+            border: 1px solid #ddd;
+            border-radius: 10px;
+
+            font-size: 16px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #555;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .submit-button {
+            background: #222;
+            color: white;
+        }
+
+        .back-button {
+            background: #ddd;
+            color: #222;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #message {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="form-card">
+
+        <div class="header">
+
+            <div class="header-icon">
+                ✏️
+            </div>
+
+            <h1>Edit Vehicle</h1>
+
+            <p>
+                Update your vehicle information.
+            </p>
+
+        </div>
+
+
+        <form id="vehicleForm">
+
+
+            <div class="form-group">
+
+                <label for="registrationNumber">
+                    Registration Number
+                </label>
+
+                <input
+                    type="text"
+                    id="registrationNumber"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="model">
+                    Vehicle Model
+                </label>
+
+                <input
+                    type="text"
+                    id="model"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="color">
+                    Color
+                </label>
+
+                <input
+                    type="text"
+                    id="color"
+                    required
+                >
+
+            </div>
+
+
+            <div class="buttons">
+
+                <button
+                    type="button"
+                    class="back-button"
+                    onclick="goBack()">
+
+                    ← Back
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="submit-button"
+                    id="submitButton">
+
+                    Save Changes
+
+                </button>
+
+            </div>
+
+
+            <div id="message"></div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // ==========================================
+    // GET VEHICLE ID
+    // ==========================================
+
+    const urlParams =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const vehicleId =
+        urlParams.get("id");
+
+
+    if (!vehicleId) {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+
+    // ==========================================
+    // ELEMENTS
+    // ==========================================
+
+    const vehicleForm =
+        document.getElementById(
+            "vehicleForm"
+        );
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+    const submitButton =
+        document.getElementById(
+            "submitButton"
+        );
+
+
+    // ==========================================
+    // LOAD VEHICLE
+    // ==========================================
+
+    loadVehicle();
+
+
+    async function loadVehicle() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/vehicles/${vehicleId}`
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Vehicle not found"
+                );
+
+            }
+
+
+            const vehicle =
+                await response.json();
+
+
+            document.getElementById(
+                "registrationNumber"
+            ).value =
+                vehicle.registrationNumber || "";
+
+
+            document.getElementById(
+                "model"
+            ).value =
+                vehicle.model || "";
+
+
+            document.getElementById(
+                "color"
+            ).value =
+                vehicle.color || "";
+
+        }
+
+
+        catch (error) {
+
+            message.className =
+                "error";
+
+            message.textContent =
+                error.message;
+
+        }
+
+    }
+
+
+    // ==========================================
+    // UPDATE VEHICLE
+    // ==========================================
+
+    vehicleForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const registrationNumber =
+                document.getElementById(
+                    "registrationNumber"
+                ).value.trim();
+
+
+            const model =
+                document.getElementById(
+                    "model"
+                ).value.trim();
+
+
+            const color =
+                document.getElementById(
+                    "color"
+                ).value.trim();
+
+
+            submitButton.disabled =
+                true;
+
+            submitButton.textContent =
+                "Saving...";
+
+            message.textContent = "";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/vehicles/${vehicleId}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                registrationNumber:
+                                    registrationNumber,
+
+                                model:
+                                    model,
+
+                                color:
+                                    color
+
+                            })
+
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    const error =
+                        await response.text();
+
+                    throw new Error(error);
+
+                }
+
+
+                message.className =
+                    "success";
+
+                message.textContent =
+                    "Vehicle updated successfully!";
+
+
+                setTimeout(
+                    function() {
+
+                        window.location.href =
+                            "dashboard.html";
+
+                    },
+                    1000
+                );
+
+            }
+
+
+            catch (error) {
+
+                message.className =
+                    "error";
+
+                message.textContent =
+                    error.message ||
+                    "Failed to update vehicle.";
+
+            }
+
+
+            finally {
+
+                submitButton.disabled =
+                    false;
+
+                submitButton.textContent =
+                    "Save Changes";
+
+            }
+
+        }
+    );
+
+
+    // ==========================================
+    // BACK
+    // ==========================================
+
+    function goBack() {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+</script>
+
+</body>
+
+</html>

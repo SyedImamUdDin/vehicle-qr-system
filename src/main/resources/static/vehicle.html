@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Vehicle Emergency Information</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        /* HEADER */
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .car-icon {
+            font-size: 50px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* CARDS */
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 18px;
+        }
+
+        /* INFORMATION */
+
+        .info {
+            margin-bottom: 15px;
+        }
+
+        .info:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-size: 17px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        /* OWNER PHONE */
+
+        .owner-phone {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* EMERGENCY BUTTON */
+
+        .emergency-button {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 17px;
+            font-size: 19px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #dc2626;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .emergency-button:hover {
+            background: #b91c1c;
+        }
+
+        .emergency-button:active {
+            transform: scale(0.98);
+        }
+
+        /* EMERGENCY SECTION */
+
+        .emergency-section {
+            display: none;
+            border: 2px solid #fecaca;
+        }
+
+        .emergency-title {
+            color: #dc2626;
+        }
+
+        .emergency-description {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        /* CONTACT */
+
+        .contact {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+
+        .contact:first-child {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        /* CALL BUTTON */
+
+        .call-button {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            padding: 14px;
+            margin-top: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 17px;
+            background: #16a34a;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .call-button:hover {
+            background: #15803d;
+        }
+
+        .call-button:active {
+            transform: scale(0.98);
+        }
+
+        /* LOADING */
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+
+        /* ERROR */
+
+        .error {
+            max-width: 450px;
+            margin: 80px auto;
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .error h2 {
+            margin-bottom: 10px;
+            color: #dc2626;
+        }
+
+        .error p {
+            color: #64748b;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 480px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <div class="car-icon">
+            🚗
+        </div>
+
+        <h1>Vehicle Information</h1>
+
+        <p>
+            Emergency QR System
+        </p>
+
+    </div>
+
+
+    <!-- OWNER -->
+
+    <div class="card">
+
+        <h2>👤 Vehicle Owner</h2>
+
+        <div class="info">
+
+            <div class="label">
+                Name
+            </div>
+
+            <div
+                class="value"
+                id="ownerName">
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="label">
+                Phone
+            </div>
+
+            <a
+                id="ownerPhone"
+                class="value owner-phone"
+                href="#">
+                Loading...
+            </a>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="label">
+                City
+            </div>
+
+            <div
+                class="value"
+                id="ownerCity">
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- VEHICLE -->
+
+    <div class="card">
+
+        <h2>🚗 Vehicle Details</h2>
+
+        <div class="info">
+
+            <div class="label">
+                Registration Number
+            </div>
+
+            <div
+                class="value"
+                id="registrationNumber">
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="label">
+                Model
+            </div>
+
+            <div
+                class="value"
+                id="vehicleModel">
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="label">
+                Color
+            </div>
+
+            <div
+                class="value"
+                id="vehicleColor">
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- EMERGENCY BUTTON -->
+
+    <div class="card">
+
+        <button
+            class="emergency-button"
+            onclick="showEmergencyContacts()">
+
+            🚨 EMERGENCY
+
+        </button>
+
+    </div>
+
+
+    <!-- EMERGENCY CONTACTS -->
+
+    <div
+        class="card emergency-section"
+        id="emergencySection">
+
+        <h2 class="emergency-title">
+            🚨 Emergency Contacts
+        </h2>
+
+        <p class="emergency-description">
+            Contact the vehicle owner's emergency contacts.
+        </p>
+
+        <div id="contactsContainer">
+            Loading...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // Get vehicle ID from URL
+
+    const urlParams =
+        new URLSearchParams(window.location.search);
+
+    const vehicleId =
+        urlParams.get("id");
+
+
+    // Check vehicle ID
+
+    if (!vehicleId) {
+
+        document.body.innerHTML =
+            `
+            <div class="error">
+
+                <h2>
+                    Vehicle not found
+                </h2>
+
+                <p>
+                    No vehicle ID was provided.
+                </p>
+
+            </div>
+            `;
+
+    } else {
+
+        loadVehicle();
+
+    }
+
+
+    // ==========================================
+    // LOAD VEHICLE INFORMATION
+    // ==========================================
+
+    async function loadVehicle() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/public/vehicles/${vehicleId}`
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Vehicle not found"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            // OWNER
+
+            document.getElementById("ownerName")
+                .textContent =
+                data.owner.name;
+
+
+            const ownerPhone =
+                document.getElementById("ownerPhone");
+
+            ownerPhone.textContent =
+                data.owner.phone;
+
+            ownerPhone.href =
+                `tel:${data.owner.phone}`;
+
+
+            document.getElementById("ownerCity")
+                .textContent =
+                data.owner.city;
+
+
+            // VEHICLE
+
+            document.getElementById(
+                "registrationNumber"
+            ).textContent =
+                data.vehicle.registrationNumber;
+
+
+            document.getElementById(
+                "vehicleModel"
+            ).textContent =
+                data.vehicle.model;
+
+
+            document.getElementById(
+                "vehicleColor"
+            ).textContent =
+                data.vehicle.color;
+
+        }
+
+
+        catch (error) {
+
+            document.body.innerHTML =
+                `
+                <div class="error">
+
+                    <h2>
+                        Unable to load vehicle
+                    </h2>
+
+                    <p>
+                        Please try again.
+                    </p>
+
+                </div>
+                `;
+
+        }
+
+    }
+
+
+    // ==========================================
+    // LOAD EMERGENCY CONTACTS
+    // ==========================================
+
+    async function showEmergencyContacts() {
+
+        const emergencySection =
+            document.getElementById(
+                "emergencySection"
+            );
+
+
+        const contactsContainer =
+            document.getElementById(
+                "contactsContainer"
+            );
+
+
+        // Show emergency section
+
+        emergencySection.style.display =
+            "block";
+
+
+        // Loading message
+
+        contactsContainer.innerHTML =
+            `
+            <div class="loading">
+                Loading emergency contacts...
+            </div>
+            `;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/public/vehicles/${vehicleId}/emergency`
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load contacts"
+                );
+
+            }
+
+
+            const contacts =
+                await response.json();
+
+
+            // No contacts
+
+            if (contacts.length === 0) {
+
+                contactsContainer.innerHTML =
+                    `
+                    <p>
+                        No emergency contacts available.
+                    </p>
+                    `;
+
+                return;
+
+            }
+
+
+            // Clear loading
+
+            contactsContainer.innerHTML =
+                "";
+
+
+            // Display contacts
+
+            contacts.forEach(contact => {
+
+                const contactDiv =
+                    document.createElement("div");
+
+
+                contactDiv.className =
+                    "contact";
+
+
+                contactDiv.innerHTML =
+                    `
+
+                    <div class="info">
+
+                        <div class="label">
+                            Name
+                        </div>
+
+                        <div class="value">
+                            ${contact.name}
+                        </div>
+
+                    </div>
+
+
+                    <div class="info">
+
+                        <div class="label">
+                            Relationship
+                        </div>
+
+                        <div class="value">
+                            ${contact.relationship}
+                        </div>
+
+                    </div>
+
+
+                    <div class="info">
+
+                        <div class="label">
+                            Phone
+                        </div>
+
+                        <div class="value">
+                            ${contact.phone}
+                        </div>
+
+                    </div>
+
+
+                    <a
+                        class="call-button"
+                        href="tel:${contact.phone}">
+
+                        📞 CALL ${contact.name}
+
+                    </a>
+
+                    `;
+
+
+                contactsContainer.appendChild(
+                    contactDiv
+                );
+
+            });
+
+        }
+
+
+        catch (error) {
+
+            contactsContainer.innerHTML =
+                `
+                <p>
+                    Unable to load emergency contacts.
+                </p>
+                `;
+
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
