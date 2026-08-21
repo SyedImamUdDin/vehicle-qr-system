@@ -23,8 +23,8 @@ public class Vehicle {
 
     private String color;
 
-    @Column(name = "qr_code", unique = true, nullable = false)
-    private String qrCode;
+    @Column(name = "qr_code", unique = true)
+private String qrCode;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
