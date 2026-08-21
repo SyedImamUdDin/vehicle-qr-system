@@ -56,3 +56,33 @@ src/
 │       └── application.properties
 │
 └── test/
+
+## Screenshots
+
+### Login
+
+![Login](screenshots/login.png)
+
+### Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+### Add Vehicle
+
+![Add Vehicle](screenshots/add-vehicle.png)
+
+### QR Code
+
+![QR Code](screenshots/qr-code.png)
+
+### Public Vehicle Information
+
+![Public Vehicle](screenshots/public-vehicle.png)
+
+### Emergency Contacts
+
+![Emergency Contacts](screenshots/emergency-contacts.png)
+
+### Emergency Alert
+
+![Emergency Alert](screenshots/emergency-alert.png)
