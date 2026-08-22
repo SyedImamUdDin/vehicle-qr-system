@@ -8,8 +8,7 @@ import com.google.zxing.common.BitMatrix;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.ByteArrayOutputStream;
 
 @Service
 public class QrCodeService {
@@ -17,7 +16,17 @@ public class QrCodeService {
     @Value("${APP_BASE_URL:http://localhost:8080}")
     private String appBaseUrl;
 
-    public String generateQrCode(Integer vehicleId) throws Exception {
+    public String generateQrCode(Integer vehicleId) {
+
+        // This is the URL that gets encoded inside the QR code.
+        String qrContent =
+                appBaseUrl + "/vehicle.html?id=" + vehicleId;
+
+        // The browser-accessible URL stored in the database.
+        return "/qrcodes/vehicle-" + vehicleId + ".png";
+    }
+
+    public byte[] generateQrCodeImage(Integer vehicleId) throws Exception {
 
         String qrContent =
                 appBaseUrl + "/vehicle.html?id=" + vehicleId;
@@ -32,21 +41,15 @@ public class QrCodeService {
                 height
         );
 
-        Path directory = Path.of("qrcodes");
+        ByteArrayOutputStream outputStream =
+                new ByteArrayOutputStream();
 
-        if (!Files.exists(directory)) {
-            Files.createDirectories(directory);
-        }
-
-        Path filePath =
-                directory.resolve("vehicle-" + vehicleId + ".png");
-
-        MatrixToImageWriter.writeToPath(
+        MatrixToImageWriter.writeToStream(
                 matrix,
                 "PNG",
-                filePath
+                outputStream
         );
 
-        return "/qrcodes/vehicle-" + vehicleId + ".png";
+        return outputStream.toByteArray();
     }
 }
