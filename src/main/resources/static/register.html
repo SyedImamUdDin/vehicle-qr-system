@@ -34,9 +34,7 @@
             background: white;
             padding: 30px;
             border-radius: 18px;
-
-            box-shadow:
-                0 5px 20px rgba(0,0,0,0.10);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.10);
         }
 
         .header {
@@ -71,10 +69,8 @@
         input {
             width: 100%;
             padding: 13px;
-
             border: 1px solid #ddd;
             border-radius: 10px;
-
             font-size: 16px;
             outline: none;
         }
@@ -83,16 +79,63 @@
             border-color: #222;
         }
 
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            background: transparent;
+            color: #555;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .toggle-password:hover {
+            background: transparent;
+            opacity: 0.8;
+        }
+
+        .password-hint {
+            display: block;
+            margin-top: 6px;
+            color: #777;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .password-status {
+            margin-top: 6px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .valid {
+            color: green;
+        }
+
+        .invalid {
+            color: #dc2626;
+        }
+
         button {
             width: 100%;
             padding: 14px;
-
             border: none;
             border-radius: 10px;
-
             font-size: 16px;
             font-weight: bold;
-
             cursor: pointer;
         }
 
@@ -110,6 +153,7 @@
             margin-top: 15px;
             text-align: center;
             font-size: 14px;
+            line-height: 1.5;
         }
 
         .error {
@@ -153,9 +197,7 @@
 
         </div>
 
-
         <form id="registerForm">
-
 
             <div class="form-group">
 
@@ -171,7 +213,6 @@
 
             </div>
 
-
             <div class="form-group">
 
                 <label for="email">
@@ -185,7 +226,6 @@
                         required>
 
             </div>
-
 
             <div class="form-group">
 
@@ -201,7 +241,6 @@
 
             </div>
 
-
             <div class="form-group">
 
                 <label for="city">
@@ -216,21 +255,43 @@
 
             </div>
 
-
             <div class="form-group">
 
                 <label for="password">
                     Password
                 </label>
 
-                <input
-                        type="password"
-                        id="password"
-                        placeholder="At least 6 characters"
-                        required>
+                <div class="password-wrapper">
+
+                    <input
+                            type="password"
+                            id="password"
+                            placeholder="Create a strong password"
+                            required>
+
+                    <button
+                            type="button"
+                            class="toggle-password"
+                            onclick="togglePassword('password', this)"
+                            aria-label="Show password">
+
+                        👁
+
+                    </button>
+
+                </div>
+
+                <small class="password-hint">
+
+                    Must contain at least 8 characters,
+                    uppercase, lowercase, number and special character.
+
+                </small>
+
+                <div id="passwordStatus"
+                     class="password-status"></div>
 
             </div>
-
 
             <div class="form-group">
 
@@ -238,14 +299,27 @@
                     Confirm Password
                 </label>
 
-                <input
-                        type="password"
-                        id="confirmPassword"
-                        placeholder="Enter password again"
-                        required>
+                <div class="password-wrapper">
+
+                    <input
+                            type="password"
+                            id="confirmPassword"
+                            placeholder="Enter password again"
+                            required>
+
+                    <button
+                            type="button"
+                            class="toggle-password"
+                            onclick="togglePassword('confirmPassword', this)"
+                            aria-label="Show password">
+
+                        👁
+
+                    </button>
+
+                </div>
 
             </div>
-
 
             <button
                     type="submit"
@@ -256,14 +330,12 @@
 
             </button>
 
-
             <div
                     id="message"
                     class="message">
             </div>
 
         </form>
-
 
         <div class="login-link">
 
@@ -279,7 +351,6 @@
 
 </div>
 
-
 <script>
 
     const form =
@@ -291,157 +362,236 @@
     const message =
         document.getElementById("message");
 
+    const passwordInput =
+        document.getElementById("password");
+
+    const confirmPasswordInput =
+        document.getElementById("confirmPassword");
+
+    const passwordStatus =
+        document.getElementById("passwordStatus");
+
+
+    function isStrongPassword(password) {
+
+        return password.length >= 8 &&
+               /[A-Z]/.test(password) &&
+               /[a-z]/.test(password) &&
+               /[0-9]/.test(password) &&
+               /[^A-Za-z0-9]/.test(password);
+    }
+
+
+    function togglePassword(
+            inputId,
+            button) {
+
+        const input =
+            document.getElementById(inputId);
+
+        if (input.type === "password") {
+
+            input.type = "text";
+
+            button.textContent = "🙈";
+
+            button.setAttribute(
+                    "aria-label",
+                    "Hide password"
+            );
+
+        } else {
+
+            input.type = "password";
+
+            button.textContent = "👁";
+
+            button.setAttribute(
+                    "aria-label",
+                    "Show password"
+            );
+        }
+    }
+
+
+    passwordInput.addEventListener(
+            "input",
+            function() {
+
+                const password =
+                    passwordInput.value;
+
+                if (password.length === 0) {
+
+                    passwordStatus.textContent = "";
+
+                    return;
+                }
+
+                if (isStrongPassword(password)) {
+
+                    passwordStatus.textContent =
+                            "✓ Strong password";
+
+                    passwordStatus.className =
+                            "password-status valid";
+
+                } else {
+
+                    passwordStatus.textContent =
+                            "✗ Password does not meet the requirements";
+
+                    passwordStatus.className =
+                            "password-status invalid";
+                }
+            }
+    );
+
 
     form.addEventListener(
-        "submit",
-        async function(event) {
+            "submit",
+            async function(event) {
 
-            event.preventDefault();
+                event.preventDefault();
 
+                const name =
+                    document.getElementById("name")
+                        .value.trim();
 
-            const name =
-                document.getElementById("name")
-                    .value.trim();
+                const email =
+                    document.getElementById("email")
+                        .value.trim();
 
+                const phone =
+                    document.getElementById("phone")
+                        .value.trim();
 
-            const email =
-                document.getElementById("email")
-                    .value.trim();
+                const city =
+                    document.getElementById("city")
+                        .value.trim();
 
+                const password =
+                    passwordInput.value;
 
-            const phone =
-                document.getElementById("phone")
-                    .value.trim();
-
-
-            const city =
-                document.getElementById("city")
-                    .value.trim();
-
-
-            const password =
-                document.getElementById("password")
-                    .value;
+                const confirmPassword =
+                    confirmPasswordInput.value;
 
 
-            const confirmPassword =
-                document.getElementById("confirmPassword")
-                    .value;
+                if (!isStrongPassword(password)) {
 
+                    message.className =
+                            "message error";
 
-            if (password !== confirmPassword) {
+                    message.textContent =
+                            "Password must be at least 8 characters and include uppercase, lowercase, number and special character.";
 
-                message.className =
-                    "message error";
-
-                message.textContent =
-                    "Passwords do not match.";
-
-                return;
-            }
-
-
-            button.disabled = true;
-
-            button.textContent =
-                "Creating Account...";
-
-            message.textContent = "";
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/api/users/register",
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                name: name,
-
-                                email: email,
-
-                                phone: phone,
-
-                                city: city,
-
-                                password: password,
-
-                                confirmPassword:
-                                    confirmPassword
-
-                            })
-                        }
-                    );
-
-
-                const text =
-                    await response.text();
-
-
-                if (!response.ok) {
-
-                    throw new Error(text);
+                    return;
                 }
 
 
-                const data =
-                    JSON.parse(text);
+                if (password !== confirmPassword) {
+
+                    message.className =
+                            "message error";
+
+                    message.textContent =
+                            "Passwords do not match.";
+
+                    return;
+                }
 
 
-                localStorage.setItem(
-                    "verificationEmail",
-                    data.email
-                );
-
-
-                message.className =
-                    "message success";
-
-                message.textContent =
-                    "Verification code sent to your email.";
-
-
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "verify-email.html";
-
-                    },
-                    1000
-                );
-
-            }
-
-            catch (error) {
-
-                message.className =
-                    "message error";
-
-                message.textContent =
-                    error.message ||
-                    "Registration failed.";
-
-            }
-
-            finally {
-
-                button.disabled = false;
+                button.disabled = true;
 
                 button.textContent =
-                    "Register";
+                        "Creating Account...";
+
+                message.textContent = "";
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/users/register",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                            "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify({
+
+                                        name: name,
+                                        email: email,
+                                        phone: phone,
+                                        city: city,
+                                        password: password,
+                                        confirmPassword:
+                                                confirmPassword
+                                    })
+                            }
+                        );
+
+
+                    const text =
+                        await response.text();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(text);
+                    }
+
+
+                    const data =
+                        JSON.parse(text);
+
+
+                    localStorage.setItem(
+                            "verificationEmail",
+                            data.email
+                    );
+
+
+                    message.className =
+                            "message success";
+
+                    message.textContent =
+                            "Verification code sent to your email.";
+
+
+                    setTimeout(
+                            function() {
+
+                                window.location.href =
+                                        "verify-email.html";
+
+                            },
+                            1000
+                    );
+
+                } catch (error) {
+
+                    message.className =
+                            "message error";
+
+                    message.textContent =
+                            error.message ||
+                            "Registration failed.";
+
+                } finally {
+
+                    button.disabled = false;
+
+                    button.textContent =
+                            "Register";
+                }
 
             }
-
-        }
     );
 
 </script>

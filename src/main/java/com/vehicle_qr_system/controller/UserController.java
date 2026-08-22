@@ -1,8 +1,10 @@
 package com.vehicle_qr_system.controller;
 
 import com.vehicle_qr_system.model.EmailVerification;
+import com.vehicle_qr_system.model.PasswordResetCode;
 import com.vehicle_qr_system.model.User;
 import com.vehicle_qr_system.repository.EmailVerificationRepository;
+import com.vehicle_qr_system.repository.PasswordResetCodeRepository;
 import com.vehicle_qr_system.repository.UserRepository;
 import com.vehicle_qr_system.service.EmailService;
 
@@ -19,6 +21,7 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final EmailVerificationRepository verificationRepository;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
     private final EmailService emailService;
 
     private final BCryptPasswordEncoder passwordEncoder =
@@ -26,22 +29,17 @@ public class UserController {
 
     private final Random random = new Random();
 
-
     public UserController(
             UserRepository userRepository,
             EmailVerificationRepository verificationRepository,
+            PasswordResetCodeRepository passwordResetCodeRepository,
             EmailService emailService) {
 
-        this.userRepository =
-                userRepository;
-
-        this.verificationRepository =
-                verificationRepository;
-
-        this.emailService =
-                emailService;
+        this.userRepository = userRepository;
+        this.verificationRepository = verificationRepository;
+        this.passwordResetCodeRepository = passwordResetCodeRepository;
+        this.emailService = emailService;
     }
-
 
     // =========================================================
     // REGISTER
@@ -59,7 +57,6 @@ public class UserController {
                     .body("Name is required");
         }
 
-
         if (request.email() == null ||
                 request.email().isBlank()) {
 
@@ -67,7 +64,6 @@ public class UserController {
                     .badRequest()
                     .body("Email is required");
         }
-
 
         if (request.phone() == null ||
                 request.phone().isBlank()) {
@@ -77,42 +73,40 @@ public class UserController {
                     .body("Phone is required");
         }
 
-
-        if (request.password() == null ||
-                request.password().length() < 6) {
+        if (!isStrongPassword(request.password())) {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Password must be at least 6 characters");
+                    .body(
+                            "Password must be at least 8 characters and include "
+                            + "an uppercase letter, lowercase letter, number, "
+                            + "and special character."
+                    );
         }
 
-
-        if (!request.password()
-                .equals(request.confirmPassword())) {
+        if (request.confirmPassword() == null ||
+                !request.password()
+                        .equals(request.confirmPassword())) {
 
             return ResponseEntity
                     .badRequest()
                     .body("Passwords do not match");
         }
 
-
         String email =
                 request.email()
                         .trim()
                         .toLowerCase();
-
 
         User existingUser =
                 userRepository
                         .findByEmail(email)
                         .orElse(null);
 
-
         /*
          * If email already exists and is verified,
          * don't allow another account.
          */
-
         if (existingUser != null &&
                 existingUser.isEmailVerified()) {
 
@@ -121,15 +115,12 @@ public class UserController {
                     .body("Email already registered");
         }
 
-
         User user;
-
 
         /*
          * If an unverified account already exists,
          * update it instead of creating another one.
          */
-
         if (existingUser != null) {
 
             user = existingUser;
@@ -139,11 +130,8 @@ public class UserController {
             user = new User();
         }
 
-
         user.setName(request.name().trim());
-
         user.setEmail(email);
-
         user.setPhone(request.phone().trim());
 
         user.setCity(
@@ -152,57 +140,41 @@ public class UserController {
                         : request.city().trim()
         );
 
-
         /*
          * Store password securely using BCrypt.
          */
-
         user.setPassword(
                 passwordEncoder.encode(
                         request.password()
                 )
         );
 
-
         /*
          * New registration requires email verification.
          */
-
         user.setEmailVerified(false);
-
 
         User savedUser =
                 userRepository.save(user);
 
-
         /*
          * Generate 6-digit verification code.
          */
-
         String code =
-                String.format(
-                        "%06d",
-                        random.nextInt(1_000_000)
-                );
-
+                generateSixDigitCode();
 
         /*
-         * Remove previous OTP.
+         * Remove previous verification code.
          */
-
-        verificationRepository
-                .deleteByEmail(email);
-
+        verificationRepository.deleteByEmail(email);
 
         /*
-         * Create new OTP.
+         * Create new verification code.
          */
-
         EmailVerification verification =
                 new EmailVerification();
 
         verification.setEmail(email);
-
         verification.setCode(code);
 
         verification.setExpiresAt(
@@ -210,16 +182,13 @@ public class UserController {
                         .plusMinutes(10)
         );
 
-
         verificationRepository.save(
                 verification
         );
 
-
         /*
-         * Send OTP email.
+         * Send verification email.
          */
-
         try {
 
             emailService.sendVerificationCode(
@@ -229,35 +198,24 @@ public class UserController {
 
         } catch (Exception e) {
 
-            /*
-             * If email could not be sent,
-             * remove the newly created user only
-             * when it was a brand-new account.
-             */
-
-            if (savedUser.getId() != null) {
-
-                // Keep account so user can resend OTP.
-            }
+            e.printStackTrace();
 
             return ResponseEntity
                     .internalServerError()
                     .body(
-                            "Account created, but verification email " +
-                            "could not be sent. Please use Resend Code."
+                            "Account created, but verification email failed: "
+                            + e.getMessage()
                     );
         }
 
-
         return ResponseEntity.ok(
                 new RegisterResponse(
-                        "Registration started. " +
-                        "Please check your email for the verification code.",
+                        "Registration started. "
+                        + "Please check your email for the verification code.",
                         email
                 )
         );
     }
-
 
     // =========================================================
     // VERIFY EMAIL
@@ -272,25 +230,23 @@ public class UserController {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Email and verification code are required");
+                    .body(
+                            "Email and verification code are required"
+                    );
         }
-
 
         String email =
                 request.email()
                         .trim()
                         .toLowerCase();
 
-
         String code =
                 request.code().trim();
-
 
         User user =
                 userRepository
                         .findByEmail(email)
                         .orElse(null);
-
 
         if (user == null) {
 
@@ -299,39 +255,34 @@ public class UserController {
                     .body("User not found");
         }
 
-
         EmailVerification verification =
                 verificationRepository
                         .findByEmail(email)
                         .orElse(null);
-
 
         if (verification == null) {
 
             return ResponseEntity
                     .badRequest()
                     .body(
-                            "Verification code not found. " +
-                            "Please request a new code."
+                            "Verification code not found. "
+                            + "Please request a new code."
                     );
         }
-
 
         if (verification
                 .getExpiresAt()
                 .isBefore(LocalDateTime.now())) {
 
-            verificationRepository
-                    .deleteByEmail(email);
+            verificationRepository.deleteByEmail(email);
 
             return ResponseEntity
                     .badRequest()
                     .body(
-                            "Verification code has expired. " +
-                            "Please request a new code."
+                            "Verification code has expired. "
+                            + "Please request a new code."
                     );
         }
-
 
         if (!verification
                 .getCode()
@@ -342,33 +293,25 @@ public class UserController {
                     .body("Incorrect verification code");
         }
 
-
         /*
          * Email successfully verified.
          */
-
         user.setEmailVerified(true);
-
         userRepository.save(user);
-
 
         /*
          * OTP is no longer needed.
          */
-
-        verificationRepository
-                .deleteByEmail(email);
-
+        verificationRepository.deleteByEmail(email);
 
         return ResponseEntity.ok(
-                "Email verified successfully. " +
-                "You can now login."
+                "Email verified successfully. "
+                + "You can now login."
         );
     }
 
-
     // =========================================================
-    // RESEND CODE
+    // RESEND VERIFICATION CODE
     // =========================================================
 
     @PostMapping("/resend-code")
@@ -383,18 +326,15 @@ public class UserController {
                     .body("Email is required");
         }
 
-
         String email =
                 request.email()
                         .trim()
                         .toLowerCase();
 
-
         User user =
                 userRepository
                         .findByEmail(email)
                         .orElse(null);
-
 
         if (user == null) {
 
@@ -403,7 +343,6 @@ public class UserController {
                     .body("User not found");
         }
 
-
         if (user.isEmailVerified()) {
 
             return ResponseEntity
@@ -411,23 +350,15 @@ public class UserController {
                     .body("Email is already verified");
         }
 
-
         String code =
-                String.format(
-                        "%06d",
-                        random.nextInt(1_000_000)
-                );
+                generateSixDigitCode();
 
-
-        verificationRepository
-                .deleteByEmail(email);
-
+        verificationRepository.deleteByEmail(email);
 
         EmailVerification verification =
                 new EmailVerification();
 
         verification.setEmail(email);
-
         verification.setCode(code);
 
         verification.setExpiresAt(
@@ -435,11 +366,9 @@ public class UserController {
                         .plusMinutes(10)
         );
 
-
         verificationRepository.save(
                 verification
         );
-
 
         try {
 
@@ -450,19 +379,20 @@ public class UserController {
 
         } catch (Exception e) {
 
+            e.printStackTrace();
+
             return ResponseEntity
                     .internalServerError()
                     .body(
-                            "Unable to send verification email"
+                            "Unable to send verification email: "
+                            + e.getMessage()
                     );
         }
-
 
         return ResponseEntity.ok(
                 "A new verification code has been sent."
         );
     }
-
 
     // =========================================================
     // LOGIN
@@ -472,35 +402,34 @@ public class UserController {
     public ResponseEntity<?> loginUser(
             @RequestBody LoginRequest request) {
 
+        if (request.email() == null ||
+                request.password() == null) {
+
+            return ResponseEntity
+                    .status(401)
+                    .body("Invalid email or password");
+        }
+
         String email =
                 request.email()
                         .trim()
                         .toLowerCase();
-
 
         User user =
                 userRepository
                         .findByEmail(email)
                         .orElse(null);
 
-
         if (user == null) {
 
             return ResponseEntity
                     .status(401)
-                    .body(
-                            "Invalid email or password"
-                    );
+                    .body("Invalid email or password");
         }
-
 
         /*
          * New accounts must verify their email.
-         *
-         * Existing users created before this feature
-         * are treated as verified.
          */
-
         if (!user.isEmailVerified()) {
 
             return ResponseEntity
@@ -510,41 +439,43 @@ public class UserController {
                     );
         }
 
-
         boolean passwordMatches;
 
+        String storedPassword =
+                user.getPassword();
 
         /*
          * New passwords use BCrypt.
          *
-         * Existing users may still have plain-text passwords
-         * from the old version of the application.
-         *
-         * After a successful old-style login, their password
-         * is automatically converted to BCrypt.
+         * Existing users may still have plain-text
+         * passwords from the old version.
          */
-
-        if (user.getPassword().startsWith("$2a$")
-                || user.getPassword().startsWith("$2b$")
-                || user.getPassword().startsWith("$2y$")) {
+        if (storedPassword != null &&
+                (storedPassword.startsWith("$2a$")
+                        || storedPassword.startsWith("$2b$")
+                        || storedPassword.startsWith("$2y$"))) {
 
             passwordMatches =
                     passwordEncoder.matches(
                             request.password(),
-                            user.getPassword()
+                            storedPassword
                     );
 
         } else {
 
+            /*
+             * Legacy plain-text password support.
+             */
             passwordMatches =
-                    user.getPassword()
-                            .equals(request.password());
-
+                    storedPassword != null &&
+                            storedPassword.equals(
+                                    request.password()
+                            );
 
             /*
-             * Upgrade old password to BCrypt.
+             * Automatically upgrade old password
+             * to BCrypt after successful login.
              */
-
             if (passwordMatches) {
 
                 user.setPassword(
@@ -557,7 +488,6 @@ public class UserController {
             }
         }
 
-
         if (!passwordMatches) {
 
             return ResponseEntity
@@ -566,7 +496,6 @@ public class UserController {
                             "Invalid email or password"
                     );
         }
-
 
         return ResponseEntity.ok(
                 new LoginResponse(
@@ -579,6 +508,264 @@ public class UserController {
         );
     }
 
+    // =========================================================
+    // FORGOT PASSWORD
+    // =========================================================
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @RequestBody ForgotPasswordRequest request) {
+
+        if (request.email() == null ||
+                request.email().isBlank()) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body("Email is required");
+        }
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElse(null);
+
+        /*
+         * Do not reveal whether an email exists.
+         */
+        if (user == null) {
+
+            return ResponseEntity.ok(
+                    "If an account exists for that email, "
+                    + "a password reset code has been sent."
+            );
+        }
+
+        if (!user.isEmailVerified()) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Please verify your email before "
+                            + "resetting your password."
+                    );
+        }
+
+        /*
+         * Generate new reset code.
+         */
+        String code =
+                generateSixDigitCode();
+
+        /*
+         * Remove previous reset code.
+         */
+        passwordResetCodeRepository
+                .deleteByEmail(email);
+
+        /*
+         * Create new reset code.
+         */
+        PasswordResetCode resetCode =
+                new PasswordResetCode();
+
+        resetCode.setEmail(email);
+        resetCode.setCode(code);
+
+        resetCode.setExpiresAt(
+                LocalDateTime.now()
+                        .plusMinutes(10)
+        );
+
+        passwordResetCodeRepository.save(
+                resetCode
+        );
+
+        /*
+         * Send reset email.
+         */
+        try {
+
+            emailService.sendPasswordResetCode(
+                    email,
+                    code
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(
+                            "Password reset email failed: "
+                            + e.getMessage()
+                    );
+        }
+
+        return ResponseEntity.ok(
+                new ForgotPasswordResponse(
+                        "If an account exists for that email, "
+                        + "a password reset code has been sent.",
+                        email
+                )
+        );
+    }
+
+    // =========================================================
+    // RESET PASSWORD
+    // =========================================================
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestBody ResetPasswordRequest request) {
+
+        if (request.email() == null ||
+                request.code() == null ||
+                request.newPassword() == null ||
+                request.confirmPassword() == null) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Email, code and password are required"
+                    );
+        }
+
+        if (!isStrongPassword(
+                request.newPassword())) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Password must be at least 8 characters and include "
+                            + "an uppercase letter, lowercase letter, number, "
+                            + "and special character."
+                    );
+        }
+
+        if (!request.newPassword()
+                .equals(request.confirmPassword())) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body("Passwords do not match");
+        }
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        String code =
+                request.code().trim();
+
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElse(null);
+
+        if (user == null) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Unable to reset password"
+                    );
+        }
+
+        PasswordResetCode resetCode =
+                passwordResetCodeRepository
+                        .findByEmail(email)
+                        .orElse(null);
+
+        if (resetCode == null) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Reset code not found. "
+                            + "Please request a new code."
+                    );
+        }
+
+        if (resetCode
+                .getExpiresAt()
+                .isBefore(LocalDateTime.now())) {
+
+            passwordResetCodeRepository
+                    .deleteByEmail(email);
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Reset code has expired. "
+                            + "Please request a new code."
+                    );
+        }
+
+        if (!resetCode
+                .getCode()
+                .equals(code)) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body("Incorrect reset code");
+        }
+
+        /*
+         * Save new password securely with BCrypt.
+         */
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.newPassword()
+                )
+        );
+
+        userRepository.save(user);
+
+        /*
+         * Reset code can no longer be reused.
+         */
+        passwordResetCodeRepository
+                .deleteByEmail(email);
+
+        return ResponseEntity.ok(
+                "Password reset successfully. "
+                + "You can now login."
+        );
+    }
+
+    // =========================================================
+    // HELPER METHODS
+    // =========================================================
+
+    private String generateSixDigitCode() {
+
+        return String.format(
+                "%06d",
+                random.nextInt(1_000_000)
+        );
+    }
+
+    private boolean isStrongPassword(
+            String password) {
+
+        if (password == null ||
+                password.length() < 8) {
+
+            return false;
+        }
+
+        return password.matches(".*[A-Z].*")
+                && password.matches(".*[a-z].*")
+                && password.matches(".*[0-9].*")
+                && password.matches(".*[^A-Za-z0-9].*");
+    }
 
     // =========================================================
     // REQUEST / RESPONSE RECORDS
@@ -594,19 +781,16 @@ public class UserController {
     ) {
     }
 
-
     public record VerifyEmailRequest(
             String email,
             String code
     ) {
     }
 
-
     public record ResendCodeRequest(
             String email
     ) {
     }
-
 
     public record LoginRequest(
             String email,
@@ -614,6 +798,18 @@ public class UserController {
     ) {
     }
 
+    public record ForgotPasswordRequest(
+            String email
+    ) {
+    }
+
+    public record ResetPasswordRequest(
+            String email,
+            String code,
+            String newPassword,
+            String confirmPassword
+    ) {
+    }
 
     public record RegisterResponse(
             String message,
@@ -621,6 +817,11 @@ public class UserController {
     ) {
     }
 
+    public record ForgotPasswordResponse(
+            String message,
+            String email
+    ) {
+    }
 
     public record LoginResponse(
             Integer id,
